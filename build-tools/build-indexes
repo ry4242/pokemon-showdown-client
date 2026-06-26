@@ -18,7 +18,7 @@ child_process.execSync('npm run build', { cwd: 'caches/pokemon-showdown' });
 console.log("DONE");
 
 const Dex = require('../caches/pokemon-showdown/dist/sim/dex').Dex;
-const CompoundWordNames = require('../caches/pokemon-showdown/dist/data/aliases').CompoundWordNames;
+const { Aliases, CompoundWordNames } = require('../caches/pokemon-showdown/dist/data/aliases');
 const toID = Dex.toID;
 process.stdout.write("Loading gen 6 data... ");
 Dex.includeData();
@@ -139,22 +139,12 @@ function requireNoCache(pathSpec) {
 		generateAlias(id, name, 'ability');
 	}
 
-	// hardcode ultra beasts
-	const ultraBeasts = {
-		ub01symbiont: "nihilego",
-		ub02absorption: "buzzwole",
-		ub02beauty: "pheromosa",
-		ub03lightning: "xurkitree",
-		ub04blade: "kartana",
-		ub04blaster: "celesteela",
-		ub05glutton: "guzzlord",
-		ubburst: "blacephalon",
-		ubassembly: "stakataka",
-		ubadhesive: "poipole",
-		ubstinger: "naganadel",
-	};
-	for (const [ubCode, id] of Object.entries(ultraBeasts)) {
-		index.push(`${ubCode} pokemon ${id} 0`);
+	for (const [alias, targetName] of Object.entries(Aliases)) {
+		const id = toID(targetName);
+		const species = Dex.species.get(id);
+		if (species.tags?.includes('Ultra Beast')) {
+			index.push(`${alias} pokemon ${id} 0`);
+		}
 	}
 
 	index.sort();
@@ -1454,8 +1444,8 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
  *********************************************************/
 
 {
-	const Aliases = requireNoCache('../caches/pokemon-showdown/dist/data/aliases.js').Aliases;
-	const buf = 'exports.BattleAliases = ' + es3stringify(Aliases) + ';';
+	const { Aliases: BattleAliases } = requireNoCache('../caches/pokemon-showdown/dist/data/aliases.js');
+	const buf = 'exports.BattleAliases = ' + es3stringify(BattleAliases) + ';';
 	fs.writeFileSync('play.pokemonshowdown.com/data/aliases.js', buf);
 }
 
